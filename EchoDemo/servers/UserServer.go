@@ -3,19 +3,41 @@ package servers
 import (
 	"GoSql/EchoDemo/dao"
 	"GoSql/EchoDemo/dto"
+	"GoSql/EchoDemo/models"
+
+	"github.com/devfeel/mapper"
 )
 
-// GetUser 获取用户信息
-// OutPut 会员DTO
-func GetUser(id int) (dto dto.UserDto) {
-	user, err := dao.GetUser(id)
+func init() {
+	mapper.Register(&models.User{})
+	mapper.Register(&dto.UserDto{})
+}
 
+// GetUser 获取用户信息
+func GetUser(id int) (userDto *dto.UserDto, err error) {
+	user, err := dao.GetUser(id)
+	if err != nil {
+		userDto = nil
+		return
+	}
+	userDto = new(dto.UserDto)
+	mapper.AutoMapper(&user, userDto)
+	return
+}
+
+// AddUser 新加用户
+func AddUser(userDto *dto.UserDto) (err error) {
+	user := &models.User{}
+	err = mapper.AutoMapper(userDto, user)
 	if err != nil {
 		return
 	}
-	dto.CreatedAt = user.CreatedAt.Time
-	dto.ID = user.ID
-	dto.UserName = user.UserName
-	dto.Password = user.Password
+	err = dao.AddUser(user)
+	if err != nil {
+		return
+	}
+	userDto.ID = user.ID
+	userDto.CreatedAt = user.CreatedAt
+	userDto.UpdatedAt = user.UpdatedAt
 	return
 }
