@@ -1,4 +1,4 @@
-package dto
+package dtos
 
 // APIResult 接口返回值
 type APIResult struct {
@@ -13,14 +13,22 @@ type APIDataResult struct {
 	Data interface{} `json:"data"`
 }
 
-// SuccessResult 返回成功消息
-func SuccessResult(data interface{}) APIDataResult {
+// SuccessDataResult 返回成功消息
+func SuccessDataResult(data interface{}) APIDataResult {
 	return APIDataResult{
 		APIResult: APIResult{
 			ErrorCode: 0,
 			Message:   "success",
 		},
 		Data: data,
+	}
+}
+
+// SuccessResult 返回成功消息
+func SuccessResult() APIResult {
+	return APIResult{
+		ErrorCode: 0,
+		Message:   "success",
 	}
 }
 
