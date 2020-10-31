@@ -4,6 +4,6 @@ package dtos
 type UserDto struct {
 	BaseDto
 	// UserName 用户账号
-	UserName string `json:"userName"`
-	Password string `json:"password"`
+	UserName string `json:"userName" mapper:"user_name"`
+	Password string `json:"password" mapper:"password"`
 }

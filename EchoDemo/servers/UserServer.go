@@ -3,36 +3,28 @@ package servers
 import (
 	"GoSql/EchoDemo/dao"
 	"GoSql/EchoDemo/dtos"
+	"GoSql/EchoDemo/mapper"
 	"GoSql/EchoDemo/models"
 	"fmt"
-
-	"github.com/devfeel/mapper"
 )
-
-func init() {
-	mapper.Register(&models.User{})
-	mapper.Register(&dtos.UserDto{})
-}
 
 // GetUser 获取用户信息
 func GetUser(id int) (userDto *dtos.UserDto, err error) {
 	user, err := dao.GetUser(id)
 	if err != nil {
-		userDto = nil
-		return
+		return nil, err
 	}
 	userDto = new(dtos.UserDto)
-	mapper.AutoMapper(&user, userDto)
+	mapper.Mapper(user, userDto)
 	return
 }
 
 // AddUser 新加用户
 func AddUser(userDto *dtos.UserDto) (err error) {
 	user := &models.User{}
-	err = mapper.AutoMapper(userDto, user)
-	if err != nil {
-		return
-	}
+
+	mapper.Mapper(userDto, user)
+
 	err = dao.AddUser(user)
 	if err != nil {
 		return
@@ -47,7 +39,7 @@ func AddUser(userDto *dtos.UserDto) (err error) {
 func UpdateUser(userDto *dtos.UserDto) (err error) {
 	user := &models.User{}
 	fmt.Println("UserDto", userDto)
-	err = mapper.AutoMapper(userDto, user)
+	mapper.Mapper(userDto, user)
 	fmt.Println("UpdateUser", user)
 	if err != nil {
 		return
