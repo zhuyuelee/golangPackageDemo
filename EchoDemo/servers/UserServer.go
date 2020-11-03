@@ -8,6 +8,17 @@ import (
 	"fmt"
 )
 
+// GetUserList 获取用户信息列表
+func GetUserList(input *dtos.PageInput) (list []dtos.UserDto, err error) {
+	users, err := dao.GetUserList(input)
+	if err != nil {
+		return nil, err
+	}
+	list = make([]dtos.UserDto, input.Limit)
+	mapper.Mapper(users, list)
+	return
+}
+
 // GetUser 获取用户信息
 func GetUser(id int) (userDto *dtos.UserDto, err error) {
 	user, err := dao.GetUser(id)

@@ -11,6 +11,21 @@ import (
 	"github.com/labstack/echo"
 )
 
+// GetUserList 获取用户列表
+func GetUserList(c echo.Context) error {
+	var input = new(dtos.PageInput)
+	err := c.Bind(input)
+	if err != nil {
+		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "参数错误"))
+	}
+
+	list, err := servers.GetUserList(input)
+	if err != nil {
+		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "获取数据失败"))
+	}
+	return c.JSON(http.StatusOK, dtos.SuccessDataResult(list))
+}
+
 // GetUser 获取用户
 func GetUser(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
