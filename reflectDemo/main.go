@@ -27,12 +27,19 @@ func main() {
 		Age:     19,
 		Created: time.Now(),
 	}
-	// fmt.Println("------------------------")
-	//t := reflect.TypeOf(stu)
-	// for i := 0; i < t.NumField(); i++ {
-	// 	f := t.Field(i)
-	// 	fmt.Printf("name:%s tag:%v index:%v path:%s \n", f.Name, f.Tag.Get("mapper"), f.Index, f.PkgPath)
-	// }
+	fmt.Println("------------------------")
+	t := reflect.TypeOf(stu)
+	newT := reflect.New(t).Elem()
+	fmt.Printf("newT %T \n", newT)
+
+	//nT := reflect.TypeOf(newT)
+
+	for i := 0; i < newT.NumField(); i++ {
+		v := newT.Field(i)
+		f := v.Type().Field(i)
+
+		fmt.Printf("name:%s tag:%v index:%v path:%s \n", f.Name, f.Tag.Get("mapper"), f.Index, f.PkgPath)
+	}
 
 	fmt.Printf("name:%s age:%d created:%v\n", stu.Name, stu.Age, stu.Created)
 	fmt.Println("------------------------")

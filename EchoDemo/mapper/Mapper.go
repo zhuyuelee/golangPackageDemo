@@ -1,77 +1,93 @@
 package mapper
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 )
 
+var zeroValue reflect.Value
+
+const tag string = "mapper"
+
+func init() {
+	zeroValue = reflect.Value{}
+
+}
+
 //Mapper struct map to struct
-func Mapper(source interface{}, to interface{}) {
-	toStruct(toMap(source), to)
+func Mapper(source interface{}, to interface{}) error {
+	sourceMap, err := toMap(source)
+	if err != nil {
+		fmt.Println("mapper error=", err)
+		return err
+	}
+	toStruct(sourceMap, to)
+	return nil
 }
 
 //toMap struct to map
-func toMap(obj interface{}) map[string]reflect.Value {
-	m := make(map[string]reflect.Value)
+func toMap(obj interface{}) (map[string]interface{}, error) {
+	m := make(map[string]interface{})
+	v := reflect.ValueOf(obj)
 	t := reflect.TypeOf(obj)
 	if t.Kind() == reflect.Ptr {
+		v = v.Elem()
 		t = t.Elem()
 	}
-	v := reflect.ValueOf(obj)
-	for i := 0; i < t.NumField(); i++ {
+	if v == zeroValue {
+		return nil, errors.New("no exists this value")
+	}
+	for i := 0; i < v.NumField(); i++ {
 		field := t.Field(i)
-		tag, ok := field.Tag.Lookup("mapper")
+		tag, ok := field.Tag.Lookup(tag)
 		if !ok {
 			tag = field.Name
 		}
-		// if field.Type.Kind() == reflect.Struct {
-		// 	value := toMap(v.Field(i).Interface())
-		// 	m[tag] = reflect.ValueOf(value)
-
-		// } else {
-		// 	m[tag] = v.Field(i)
-		// }
-		m[tag] = v.Field(i)
-		fmt.Printf("value:%v\n", v.Field(i).Interface())
-
+		value := v.Field(i)
+		m[tag] = value.Interface()
 	}
-	return m
+	return m, nil
 }
 
-func toStruct(m map[string]reflect.Value, obj interface{}) {
-	v := reflect.ValueOf(obj)
-	t := reflect.TypeOf(obj)
-
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
+func toStruct(m map[string]interface{}, obj interface{}) {
+	var v = reflect.Value{}
+	var ok bool
+	if v, ok = obj.(reflect.Value); !ok {
+		v = reflect.ValueOf(obj)
+	}
+	t := v.Type()
+	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
+		t = t.Elem()
 	}
 	for i := 0; i < v.NumField(); i++ {
-		valueField := v.Field(i)
-		field := t.Field(i)
-		fmt.Printf("Field:%d\n", i)
+		vField := v.Field(i)
+		tField := t.Field(i)
 		var name string
-		var ok bool
-		if name, ok = field.Tag.Lookup("mapper"); !ok {
-			name = field.Name
+		if name, ok = tField.Tag.Lookup("mapper"); !ok {
+			name = tField.Name
 		}
-		fmt.Printf("mapvalue %v \n", m[name])
-		// valueField.Set(m[name])
-
 		if value, ok := m[name]; ok {
-			// if field.Type.Kind() == reflect.Struct {
-			// 	value := toMap(v.Field(i).Interface())
-			// 	m[tag] = reflect.ValueOf(value)
+			sType := reflect.TypeOf(value)
+			vType := tField.Type
 
-			// } else {
+			if sType.Kind() == reflect.Ptr {
+				sType = sType.Elem()
+			}
+			if vType.Kind() == reflect.Ptr {
+				vType = vType.Elem()
+			}
+			if sType.Kind() == reflect.Struct && sType != vType {
+				nValue := reflect.New(vType)
+				fmt.Println("vType=", vType)
 
-			// 	valueField.Set(value)
-			// 	fmt.Printf("name:%s value:%v \n", name, value)
-			// }
+				Mapper(value, nValue)
+				vField.Set(nValue.Elem())
+			} else {
+				vField.Set(reflect.ValueOf(value))
+			}
 
-			valueField.Set(value)
-			fmt.Printf("name:%s value:%v \n", name, value)
 		}
 	}
-	return
 }
