@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 )
 
 var zeroValue reflect.Value
@@ -12,64 +13,69 @@ const tag string = "mapper"
 
 func init() {
 	zeroValue = reflect.Value{}
-
 }
 
 //Mapper struct map to struct
 func Mapper(source interface{}, to interface{}) error {
+	startTime := time.Now()
+	defer func() {
+		fmt.Println("mapper time=", time.Now().Sub(startTime).Seconds())
+	}()
+
+	return mapperToStruct(source, reflect.ValueOf(to))
+}
+
+//mapperToStruct struct map to struct
+func mapperToStruct(source interface{}, to reflect.Value) error {
 	sourceMap, err := toMap(source)
 	if err != nil {
 		fmt.Println("mapper error=", err)
-		return err
+	} else {
+		toStruct(sourceMap, to)
 	}
-	toStruct(sourceMap, to)
-	return nil
+	return err
 }
 
 //toMap struct to map
-func toMap(obj interface{}) (map[string]interface{}, error) {
-	m := make(map[string]interface{})
-	v := reflect.ValueOf(obj)
-	t := reflect.TypeOf(obj)
+func toMap(source interface{}) (map[string]reflect.Value, error) {
+	m := make(map[string]reflect.Value)
+	value := reflect.ValueOf(source)
+	t := value.Type()
 	if t.Kind() == reflect.Ptr {
-		v = v.Elem()
+		value = value.Elem()
 		t = t.Elem()
 	}
-	if v == zeroValue {
+	if value == zeroValue {
 		return nil, errors.New("no exists this value")
 	}
-	for i := 0; i < v.NumField(); i++ {
+	for i := 0; i < value.NumField(); i++ {
 		field := t.Field(i)
 		tag, ok := field.Tag.Lookup(tag)
 		if !ok {
 			tag = field.Name
 		}
-		value := v.Field(i)
-		m[tag] = value.Interface()
+		m[tag] = value.Field(i)
 	}
 	return m, nil
 }
 
-func toStruct(m map[string]interface{}, obj interface{}) {
-	var v = reflect.Value{}
-	var ok bool
-	if v, ok = obj.(reflect.Value); !ok {
-		v = reflect.ValueOf(obj)
+func toStruct(m map[string]reflect.Value, to reflect.Value) {
+
+	if to.Kind() == reflect.Ptr {
+		to = to.Elem()
 	}
-	t := v.Type()
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-		t = t.Elem()
-	}
-	for i := 0; i < v.NumField(); i++ {
-		vField := v.Field(i)
-		tField := t.Field(i)
-		var name string
+	for i := 0; i < to.NumField(); i++ {
+		vField := to.Field(i)
+		tField := to.Type().Field(i)
+		var (
+			name string
+			ok   bool
+		)
 		if name, ok = tField.Tag.Lookup("mapper"); !ok {
 			name = tField.Name
 		}
 		if value, ok := m[name]; ok {
-			sType := reflect.TypeOf(value)
+			sType := value.Type()
 			vType := tField.Type
 
 			if sType.Kind() == reflect.Ptr {
@@ -80,12 +86,10 @@ func toStruct(m map[string]interface{}, obj interface{}) {
 			}
 			if sType.Kind() == reflect.Struct && sType != vType {
 				nValue := reflect.New(vType)
-				fmt.Println("vType=", vType)
-
-				Mapper(value, nValue)
+				mapperToStruct(value.Interface(), nValue)
 				vField.Set(nValue.Elem())
 			} else {
-				vField.Set(reflect.ValueOf(value))
+				vField.Set(value)
 			}
 
 		}
