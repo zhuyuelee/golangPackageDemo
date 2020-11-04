@@ -4,6 +4,7 @@ import (
 	"GoSql/EchoDemo/data"
 	"GoSql/EchoDemo/dtos"
 	"GoSql/EchoDemo/models"
+	"fmt"
 )
 
 //GetUserList 获取用户信息
@@ -20,7 +21,7 @@ func GetUserList(input *dtos.PageInput) (list []models.User, err error) {
 		list = make([]models.User, input.Limit)
 		result := db.Debug()
 		if input.Key != "" {
-			result = result.Where("user_name like '%?%'", input.Key)
+			result = result.Where("user_name like ?", fmt.Sprintf("%%%s%%", input.Key))
 		}
 		result = result.Limit(input.Limit).Offset((input.Page - 1) * input.Limit).Find(&list)
 
