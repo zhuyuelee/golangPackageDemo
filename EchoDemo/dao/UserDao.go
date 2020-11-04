@@ -7,6 +7,19 @@ import (
 	"fmt"
 )
 
+//Login 登录
+func Login(input *dtos.LoginInput) (user models.User, err error) {
+	db, err := data.DbHelper()
+	defer db.Close()
+	if err == nil {
+		result := db.Debug().Where("user_name=? and password=?", input.UserName, input.Password).Find(&user)
+		if result.Error != nil {
+			err = result.Error
+		}
+	}
+	return
+}
+
 //GetUserList 获取用户信息
 func GetUserList(input *dtos.PageInput) (list []models.User, err error) {
 	db, err := data.DbHelper()

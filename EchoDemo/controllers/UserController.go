@@ -3,19 +3,31 @@ package controllers
 import (
 	"GoSql/EchoDemo/dtos"
 	"GoSql/EchoDemo/servers"
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo"
 )
 
+//Login 登录
+func Login(c echo.Context) error {
+	input := new(dtos.LoginInput)
+	err := c.Bind(input)
+	if err != nil {
+		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "参数错误"))
+	}
+	userDto, err := servers.Login(input)
+	if err != nil {
+		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "获取数据失败"))
+	}
+	return c.JSON(http.StatusOK, dtos.SuccessDataResult(userDto))
+}
+
 // GetUserList 获取用户列表
 func GetUserList(c echo.Context) error {
 	var input = new(dtos.PageInput)
 	err := c.Bind(input)
 
-	fmt.Println("userlist", input)
 	if err != nil {
 		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "参数错误"))
 	}
