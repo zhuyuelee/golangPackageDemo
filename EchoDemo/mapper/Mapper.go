@@ -16,11 +16,17 @@ func init() {
 }
 
 //Map to struct or Slice
-func Map(source, target interface{}) error {
+func Map(source, target interface{}) (err error) {
 	startTime := time.Now()
 	defer func() {
 		fmt.Println("mapper time=", time.Now().Sub(startTime).Seconds())
 	}()
+	defer func() {
+		if mapErr := recover(); mapErr != nil {
+			err = fmt.Errorf("map error %v", mapErr)
+		}
+	}()
+
 	targetValue := reflect.ValueOf(target)
 	if targetValue.Kind() != reflect.Ptr {
 		return errors.New("target must pointer")
@@ -39,7 +45,9 @@ func Map(source, target interface{}) error {
 	case reflect.Struct:
 		return toStruct(sources, targetValue)
 	}
-	return errors.New("data type only supported struct or Slice")
+	err = errors.New("data type only supported struct or Slice")
+
+	return
 }
 
 //mapToSlice to Slice

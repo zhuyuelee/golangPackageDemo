@@ -2,9 +2,8 @@ package dtos
 
 // APIResult 接口返回值
 type APIResult struct {
-	ErrorCode int         `json:"errorCode"`
-	Message   string      `json:"message"`
-	Data      interface{} `json:"data"`
+	ErrorCode int    `json:"errorCode"`
+	Message   string `json:"message"`
 }
 
 // APIDataResult 接口返回值

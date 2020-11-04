@@ -14,32 +14,30 @@ func GetUserList(input *dtos.PageInput) (list []dtos.UserDto, err error) {
 		return nil, err
 	}
 	list = make([]dtos.UserDto, input.Limit)
-	mapper.Map(users, &list)
+	err = mapper.Map(users, &list)
 	return
 }
 
 // GetUser 获取用户信息
 func GetUser(id int) (userDto *dtos.UserDto, err error) {
 	user, err := dao.GetUser(id)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		userDto = new(dtos.UserDto)
+		err = mapper.Map(user, userDto)
 	}
-	userDto = new(dtos.UserDto)
-	mapper.Map(user, userDto)
 	return
 }
 
 // AddUser 新加用户
 func AddUser(userDto *dtos.UserDto) (err error) {
 	user := &models.User{}
-
-	mapper.Map(userDto, user)
-
-	err = dao.AddUser(user)
+	err = mapper.Map(userDto, user)
 	if err != nil {
-		return
+		err = dao.AddUser(user)
+		if err == nil {
+			err = mapper.Map(user, userDto)
+		}
 	}
-	mapper.Map(user, userDto)
 	return
 }
 
@@ -47,11 +45,13 @@ func AddUser(userDto *dtos.UserDto) (err error) {
 func UpdateUser(userDto *dtos.UserDto) (err error) {
 	user := &models.User{}
 	mapper.Map(userDto, user)
-	if err != nil {
-		return
+	if err == nil {
+		err = dao.UpdateUser(user)
+		if err == nil {
+			err = mapper.Map(user, userDto)
+		}
 	}
-	err = dao.UpdateUser(user)
-	mapper.Map(user, userDto)
+
 	return
 }
 
