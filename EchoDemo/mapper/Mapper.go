@@ -15,8 +15,8 @@ func init() {
 	zeroValue = reflect.Value{}
 }
 
-//Mapper to struct or Slice
-func Mapper(source interface{}, target interface{}) error {
+//Map to struct or Slice
+func Map(source, target interface{}) error {
 	startTime := time.Now()
 	defer func() {
 		fmt.Println("mapper time=", time.Now().Sub(startTime).Seconds())
@@ -35,44 +35,73 @@ func Mapper(source interface{}, target interface{}) error {
 	}
 	switch sources.Kind() {
 	case reflect.Slice:
-		return mapperToSlice(sources, targetValue)
+		return toSlice(sources, targetValue)
 	case reflect.Struct:
-		return mapperToStruct(sources, targetValue)
+		return toStruct(sources, targetValue)
 	}
-	return errors.New("Source data only struct or Slice supported")
+	return errors.New("data type only supported struct or Slice")
 }
 
-//mapperToSlice to Slice
-func mapperToSlice(source reflect.Value, target reflect.Value) error {
-	// direct := reflect.Indirect(target)
-
-	// for i := 0; i < sources.Len(); i++ {
-	// 	s := sources.Index(i)
-	// 	d := reflect.New(target.Index(0).Type())
-	// 	mapperToStruct(s, d)
-	// 	append(target, d)
-	// }
-
-	// sourceMap, err := toMap(sources)
-	// if err != nil {
-	// 	fmt.Println("mapper error=", err)
-	// } else {
-	// 	toStruct(sourceMap, target)
-	// }
-	// return err
-
+//mapToSlice to Slice
+func toSlice(source, target reflect.Value) error {
+	//remove pointer
+	target = target.Elem()
+	targetType := target.Type()
+	len := source.Len()
+	targetSlice := reflect.MakeSlice(targetType, len, len)
+	for i := 0; i < len; i++ {
+		value := reflect.New(targetType.Elem())
+		toStruct(source.Index(i), value)
+		targetSlice.Index(i).Set(value.Elem())
+	}
+	target.Set(targetSlice)
 	return nil
 }
 
-//mapperToStruct struct map to struct
-func mapperToStruct(source reflect.Value, target reflect.Value) error {
+//toStruct map to Struct
+func toStruct(source, target reflect.Value) (err error) {
 	sourceMap, err := toMap(source)
 	if err != nil {
-		fmt.Println("mapper error=", err)
-	} else {
-		toStruct(sourceMap, target)
+		return
 	}
-	return err
+	//remove pointer
+	target = target.Elem()
+	for i := 0; i < target.NumField(); i++ {
+		vField := target.Field(i)
+		tField := target.Type().Field(i)
+		var (
+			name string
+			ok   bool
+		)
+		if name, ok = tField.Tag.Lookup("mapper"); !ok {
+			name = tField.Name
+		}
+		if value, ok := sourceMap[name]; ok {
+			sType := value.Type()
+			vType := tField.Type
+
+			if sType.Kind() == reflect.Ptr {
+				sType = sType.Elem()
+			}
+			if vType.Kind() == reflect.Ptr {
+				vType = vType.Elem()
+			}
+			//type of Struct
+			if sType.Kind() == reflect.Struct && sType != vType {
+				nValue := reflect.New(vType)
+				toStruct(value, nValue)
+				vField.Set(nValue.Elem())
+				//type of Slice
+			} else if sType.Kind() == reflect.Slice && sType != vType {
+				nValue := reflect.New(vType)
+				toSlice(value, nValue)
+				vField.Set(nValue.Elem())
+			} else {
+				vField.Set(value)
+			}
+		}
+	}
+	return
 }
 
 //toMap struct to map
@@ -92,41 +121,4 @@ func toMap(source reflect.Value) (map[string]reflect.Value, error) {
 		m[tag] = source.Field(i)
 	}
 	return m, nil
-}
-
-func toStruct(m map[string]reflect.Value, to reflect.Value) {
-
-	if to.Kind() == reflect.Ptr {
-		to = to.Elem()
-	}
-	for i := 0; i < to.NumField(); i++ {
-		vField := to.Field(i)
-		tField := to.Type().Field(i)
-		var (
-			name string
-			ok   bool
-		)
-		if name, ok = tField.Tag.Lookup("mapper"); !ok {
-			name = tField.Name
-		}
-		if value, ok := m[name]; ok {
-			sType := value.Type()
-			vType := tField.Type
-
-			if sType.Kind() == reflect.Ptr {
-				sType = sType.Elem()
-			}
-			if vType.Kind() == reflect.Ptr {
-				vType = vType.Elem()
-			}
-			if sType.Kind() == reflect.Struct && sType != vType {
-				nValue := reflect.New(vType)
-				mapperToStruct(value, nValue)
-				vField.Set(nValue.Elem())
-			} else {
-				vField.Set(value)
-			}
-
-		}
-	}
 }

@@ -18,6 +18,7 @@ func main() {
 	})
 	//获取会员资料
 	Router.GET("/user/:id", controllers.GetUser)
+	Router.GET("/user/list", controllers.GetUserList)
 	Router.POST("/user/add", controllers.AddUser)
 	Router.PUT("/user/update", controllers.UpdateUser)
 	Router.DELETE("/user/delete/:id", controllers.DeleteUser)

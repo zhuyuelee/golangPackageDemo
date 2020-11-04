@@ -3,10 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -19,14 +17,28 @@ type UserInfo struct {
 	UpdatedAt sql.NullTime `db:"updated_at"`
 }
 
-func main() {
-	db, err := sqlx.Open("sqlite3", "data/data.db")
-	//con, err := sqlx.Connect("sqlite3", "data/data.db")
-	if err != nil {
-		log.Fatalln("database connent erro ", err)
-		panic("database connent error")
+func getSlice() (list []UserInfo) {
+	list = make([]UserInfo, 1)
+	list[0] = UserInfo{
+		ID:   1,
+		Name: "张三",
 	}
-	defer db.Close()
+	fmt.Println("list:", list)
+	return
+}
+
+func main() {
+
+	list := getSlice()
+	fmt.Println("info:", list)
+
+	// db, err := sqlx.Open("sqlite3", "data/data.db")
+	// //con, err := sqlx.Connect("sqlite3", "data/data.db")
+	// if err != nil {
+	// 	log.Fatalln("database connent erro ", err)
+	// 	panic("database connent error")
+	// }
+	// defer db.Close()
 	//defer con.Close()
 
 	// sqlStmt := `drop table if exists UserInfo;

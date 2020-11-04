@@ -4,7 +4,6 @@ import (
 	"GoSql/EchoDemo/data"
 	"GoSql/EchoDemo/dtos"
 	"GoSql/EchoDemo/models"
-	"fmt"
 )
 
 //GetUserList 获取用户信息
@@ -21,12 +20,12 @@ func GetUserList(input *dtos.PageInput) (list []models.User, err error) {
 	if input.Limit == 0 {
 		input.Limit = 10
 	}
-	result := db.Debug().Where("user_name like '%?%'", input.Key).Limit(input.Limit).Offset((input.Page - 1) * input.Limit).Find(list)
+	list = make([]models.User, input.Limit)
+	//result := db.Debug().Where("user_name like '%?%'", input.Key).Limit(input.Limit).Offset((input.Page - 1) * input.Limit).Find(list)
+	result := db.Debug().Limit(input.Limit).Offset((input.Page - 1) * input.Limit).Find(&list)
 	if result.Error != nil {
 		err = result.Error
-		fmt.Println("GetUserList error=", err)
 	}
-	fmt.Println("GetUserList list=", list)
 	return
 }
 
@@ -40,9 +39,7 @@ func GetUser(id int) (user models.User, err error) {
 	result := db.Debug().First(&user, id)
 	if result.Error != nil {
 		err = result.Error
-		fmt.Println("GetUser error=", err)
 	}
-	fmt.Println("GetUser user=", user)
 	return
 }
 
@@ -64,7 +61,7 @@ func UpdateUser(user *models.User) (err error) {
 	if err != nil {
 		return
 	}
-	db.Debug().Model(&models.User{}).Where("id=?", user.ID).Update(user)
+	db.Debug().Model(&models.User{}).Update(user)
 	return
 }
 
@@ -78,8 +75,6 @@ func DeleteUser(id int) (err error) {
 	result := db.Debug().Delete(&models.User{}, id)
 	if result.Error != nil {
 		err = result.Error
-		fmt.Println("DeleteUser error=", err)
 	}
-	fmt.Println("DeleteUser user=", result.RowsAffected)
 	return
 }

@@ -5,7 +5,6 @@ import (
 	"GoSql/EchoDemo/servers"
 	"fmt"
 	"net/http"
-	"reflect"
 	"strconv"
 
 	"github.com/labstack/echo"
@@ -15,6 +14,8 @@ import (
 func GetUserList(c echo.Context) error {
 	var input = new(dtos.PageInput)
 	err := c.Bind(input)
+
+	fmt.Println("userlist", input)
 	if err != nil {
 		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "参数错误"))
 	}
@@ -29,7 +30,6 @@ func GetUserList(c echo.Context) error {
 // GetUser 获取用户
 func GetUser(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	fmt.Println("GetUser parm=", id)
 	if err != nil {
 		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "参数类型错误"))
 	}
@@ -63,9 +63,6 @@ func UpdateUser(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "参数错误"))
 	}
-	fmt.Println("reflect", reflect.ValueOf(userDto))
-
-	fmt.Println("get parms", userDto)
 	err = servers.UpdateUser(&userDto)
 
 	if err != nil {
@@ -77,7 +74,6 @@ func UpdateUser(c echo.Context) error {
 // DeleteUser 删除用户
 func DeleteUser(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	fmt.Println("DeleteUser parm=", id)
 	if err != nil {
 		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "参数类型错误"))
 	}

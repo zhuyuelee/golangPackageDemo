@@ -5,7 +5,6 @@ import (
 	"GoSql/EchoDemo/dtos"
 	"GoSql/EchoDemo/mapper"
 	"GoSql/EchoDemo/models"
-	"fmt"
 )
 
 // GetUserList 获取用户信息列表
@@ -15,7 +14,7 @@ func GetUserList(input *dtos.PageInput) (list []dtos.UserDto, err error) {
 		return nil, err
 	}
 	list = make([]dtos.UserDto, input.Limit)
-	mapper.Mapper(users, list)
+	mapper.Map(users, &list)
 	return
 }
 
@@ -26,7 +25,7 @@ func GetUser(id int) (userDto *dtos.UserDto, err error) {
 		return nil, err
 	}
 	userDto = new(dtos.UserDto)
-	mapper.Mapper(user, userDto)
+	mapper.Map(user, userDto)
 	return
 }
 
@@ -34,31 +33,25 @@ func GetUser(id int) (userDto *dtos.UserDto, err error) {
 func AddUser(userDto *dtos.UserDto) (err error) {
 	user := &models.User{}
 
-	mapper.Mapper(userDto, user)
+	mapper.Map(userDto, user)
 
 	err = dao.AddUser(user)
 	if err != nil {
 		return
 	}
-	userDto.ID = user.ID
-	userDto.CreatedAt = user.CreatedAt
-	userDto.UpdatedAt = user.UpdatedAt
+	mapper.Map(user, userDto)
 	return
 }
 
 // UpdateUser 修改用户
 func UpdateUser(userDto *dtos.UserDto) (err error) {
 	user := &models.User{}
-	fmt.Println("UserDto", userDto)
-	mapper.Mapper(userDto, user)
-	fmt.Println("UpdateUser", user)
+	mapper.Map(userDto, user)
 	if err != nil {
 		return
 	}
 	err = dao.UpdateUser(user)
-	if err != nil {
-		return
-	}
+	mapper.Map(user, userDto)
 	return
 }
 
