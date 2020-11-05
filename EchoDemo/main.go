@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 )
 
 //Router 路由
@@ -18,14 +17,21 @@ func main() {
 		//控制器函数直接返回一个字符串，http响应状态为http.StatusOK，就是200状态。
 		return c.String(http.StatusOK, "hello echo demo")
 	})
-	Router.Use(middleware.JWT([]byte(utils.JWTTokenSecret)))
 	Router.POST("/login", controllers.Login)
-	//获取会员资料
-	Router.GET("/user/:id", controllers.GetUser)
-	Router.GET("/user/list", controllers.GetUserList)
-	Router.POST("/user/add", controllers.AddUser)
-	Router.PUT("/user/update", controllers.UpdateUser)
-	Router.DELETE("/user/delete/:id", controllers.DeleteUser)
+	Router.GET("/welcome", controllers.Welcome)
+
+	userRouter := Router.Group("/user")
+	{
+		//JWTConfig
+		userRouter.Use(utils.JWTConfig())
+		userRouter.GET("/welcome", controllers.Welcome)
+		//获取会员资料
+		userRouter.GET("/:id", controllers.GetUser)
+		userRouter.GET("/list", controllers.GetUserList)
+		userRouter.POST("/add", controllers.AddUser)
+		userRouter.PUT("/update", controllers.UpdateUser)
+		userRouter.DELETE("/delete/:id", controllers.DeleteUser)
+	}
 	Router.Start(":9090")
 }
 

@@ -3,6 +3,7 @@ package controllers
 import (
 	"GoSql/EchoDemo/dtos"
 	"GoSql/EchoDemo/servers"
+	"GoSql/EchoDemo/utils"
 	"net/http"
 	"strconv"
 
@@ -16,11 +17,11 @@ func Login(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "参数错误"))
 	}
-	userDto, err := servers.Login(input)
+	result, err := servers.Login(input)
 	if err != nil {
 		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "获取数据失败"))
 	}
-	return c.JSON(http.StatusOK, dtos.SuccessDataResult(userDto))
+	return c.JSON(http.StatusOK, dtos.SuccessDataResult(result))
 }
 
 // GetUserList 获取用户列表
@@ -51,6 +52,15 @@ func GetUser(c echo.Context) error {
 		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "获取数据失败"))
 	}
 	return c.JSON(http.StatusOK, dtos.SuccessDataResult(userDto))
+}
+
+//Welcome 欢迎
+func Welcome(c echo.Context) error {
+	claims, err := utils.GetToken(c)
+	if err != nil {
+		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "获取数据失败"))
+	}
+	return c.JSON(http.StatusOK, dtos.SuccessDataResult(claims))
 }
 
 // AddUser 新加用户

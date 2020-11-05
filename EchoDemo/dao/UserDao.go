@@ -4,6 +4,7 @@ import (
 	"GoSql/EchoDemo/data"
 	"GoSql/EchoDemo/dtos"
 	"GoSql/EchoDemo/models"
+	"errors"
 	"fmt"
 )
 
@@ -15,6 +16,8 @@ func Login(input *dtos.LoginInput) (user models.User, err error) {
 		result := db.Debug().Where("user_name=? and password=?", input.UserName, input.Password).Find(&user)
 		if result.Error != nil {
 			err = result.Error
+		} else if result.RowsAffected == 0 {
+			err = errors.New("用户不存在")
 		}
 	}
 	return

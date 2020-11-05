@@ -1,9 +1,23 @@
 package dtos
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 // APIResult 接口返回值
 type APIResult struct {
 	ErrorCode int    `json:"errorCode"`
 	Message   string `json:"message"`
+}
+
+func (a APIResult) Error() (result string) {
+	data, err := json.Marshal(a)
+	if err == nil {
+		result = string(data)
+		fmt.Println(result)
+	}
+	return
 }
 
 // APIDataResult 接口返回值

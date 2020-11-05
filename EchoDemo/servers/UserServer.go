@@ -6,31 +6,15 @@ import (
 	"GoSql/EchoDemo/mapper"
 	"GoSql/EchoDemo/models"
 	"GoSql/EchoDemo/utils"
-	"time"
-
-	"github.com/dgrijalva/jwt-go"
+	"fmt"
 )
 
 //Login 登录
 func Login(input *dtos.LoginInput) (token *dtos.TokenDto, err error) {
 	user, err := dao.Login(input)
+	fmt.Println("login:", user)
 	if err == nil {
-		// Set custom claims
-		claims := struct {
-			UserName string
-			jwt.StandardClaims
-		}{
-			user.UserName,
-			jwt.StandardClaims{
-				ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
-			},
-		}
-
-		// Create token with claims
-		tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
-		token = new(dtos.TokenDto)
-		// Generate encoded token and send it as response.
-		token.Token, err = tokenClaims.SignedString([]byte(utils.JWTTokenSecret))
+		token, err = utils.CreateToken(&user)
 	}
 	return
 }
