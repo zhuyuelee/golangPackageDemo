@@ -39,7 +39,7 @@ func Map(source, target interface{}) (err error) {
 	if sources.Kind() == reflect.Ptr {
 		sources = sources.Elem()
 	}
-	switch sources.Kind() {
+	switch targetValue.Elem().Kind() {
 	case reflect.Slice:
 		return toSlice(sources, targetValue)
 	case reflect.Struct:
