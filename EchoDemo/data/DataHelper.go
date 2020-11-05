@@ -2,6 +2,7 @@ package data
 
 import (
 	"GoSql/EchoDemo/models"
+	"GoSql/EchoDemo/utils"
 	"fmt"
 
 	"github.com/jinzhu/gorm"
@@ -11,23 +12,23 @@ import (
 )
 
 // DbHelper returns gorm.DB对象
-func DbHelper() (*gorm.DB, error) {
-	db, err := gorm.Open("sqlite3", "./data/data.db")
+func DbHelper() *gorm.DB {
+	datapath, err := utils.GetDatabaseConfig()
 	if err != nil {
-		fmt.Println("database open error", err)
-		return nil, err
+		panic(fmt.Sprintf("database path config erro err:%v", err))
 	}
-	fmt.Println("database Open")
-	return db, err
+	db, err := gorm.Open("sqlite3", datapath)
+	if err != nil {
+		panic(fmt.Sprintf("database open error err:%v", err))
+	}
+	return db
 }
 
 //初始化数据库
 func init() {
-	db, err := DbHelper()
+	db := DbHelper()
 	defer db.Close()
-	if err != nil {
-		return
-	}
+
 	//初始化user表
 	db.AutoMigrate(models.User{})
 	fmt.Println("database init")

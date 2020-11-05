@@ -3,9 +3,11 @@ package main
 import (
 	"GoSql/EchoDemo/controllers"
 	"GoSql/EchoDemo/utils"
-	"net/http"
+	"fmt"
+	"os"
 
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
 //Router 路由
@@ -13,17 +15,29 @@ var Router *echo.Echo
 
 func main() {
 
-	Router.GET("/", func(c echo.Context) error {
-		//控制器函数直接返回一个字符串，http响应状态为http.StatusOK，就是200状态。
-		return c.String(http.StatusOK, "hello echo demo")
-	})
+	//中间件
+	Router.Use(middleware.Gzip())
+	Router.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Output: os.Stdout,
+	}))
+	//跨域配置
+
+	if corsConfig, err := utils.GetCORSConfig(); err == nil {
+		Router.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+			AllowOrigins: corsConfig,
+			AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		}))
+	} else {
+		fmt.Println("corsconfig error", err)
+
+	}
+
 	Router.POST("/login", controllers.Login)
 	Router.GET("/welcome", controllers.Welcome)
 
-	userRouter := Router.Group("/user")
+	//user
+	userRouter := Router.Group("/user", utils.JWTConfig())
 	{
-		//JWTConfig
-		userRouter.Use(utils.JWTConfig())
 		userRouter.GET("/welcome", controllers.Welcome)
 		//获取会员资料
 		userRouter.GET("/:id", controllers.GetUser)
