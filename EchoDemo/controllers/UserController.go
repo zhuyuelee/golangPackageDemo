@@ -135,7 +135,7 @@ func UpdateUser(c echo.Context) error {
 	err = servers.UpdateUser(&userDto)
 
 	if err != nil {
-		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "添加失败"))
+		return c.JSON(http.StatusOK, dtos.ErrorResult(1, err.Error()))
 	}
 	return c.JSON(http.StatusOK, dtos.SuccessDataResult(userDto))
 }

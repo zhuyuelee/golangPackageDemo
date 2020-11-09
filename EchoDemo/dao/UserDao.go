@@ -88,7 +88,10 @@ func UpdateUser(user *models.User) (err error) {
 	result := db.Debug().Model(&models.User{}).Update(user)
 	if result.Error != nil {
 		err = result.Error
+	} else if result.RowsAffected == 0 {
+		err = errors.New("数据不存在")
 	}
+	fmt.Printf("result:=%+v \n", result)
 	return
 }
 
