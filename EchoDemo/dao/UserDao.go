@@ -4,20 +4,31 @@ import (
 	"GoSql/EchoDemo/data"
 	"GoSql/EchoDemo/dtos"
 	"GoSql/EchoDemo/models"
+	"GoSql/EchoDemo/utils"
+	"crypto/md5"
 	"errors"
 	"fmt"
 )
+
+func getPassword(pwd string) (password string) {
+	salt, _ := utils.GetSalt()
+	password = fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s_%s", pwd, salt))))
+	return
+}
 
 //Login 登录
 func Login(input *dtos.LoginInput) (user models.User, err error) {
 	db := data.DbHelper()
 	defer db.Close()
-	result := db.Debug().Where("user_name=? and password=?", input.UserName, input.Password).Find(&user)
-	if result.Error != nil {
-		err = result.Error
-	} else if result.RowsAffected == 0 {
+	pwd := getPassword(input.Password)
+	fmt.Printf("pwd:=%s \n", pwd)
+	result := db.Debug().Where("user_name=? and password=?", input.UserName, pwd).Find(&user)
+	if result.RowsAffected == 0 {
 		err = errors.New("用户不存在")
+	} else if result.Error != nil {
+		err = result.Error
 	}
+	fmt.Printf("result:=%+v \n", result)
 	return
 }
 
@@ -59,6 +70,7 @@ func GetUser(id int) (user models.User, err error) {
 func AddUser(user *models.User) (err error) {
 	db := data.DbHelper()
 	defer db.Close()
+	user.Password = getPassword(user.Password)
 	result := db.Debug().Create(user)
 	if result.Error != nil {
 		err = result.Error
@@ -70,6 +82,9 @@ func AddUser(user *models.User) (err error) {
 func UpdateUser(user *models.User) (err error) {
 	db := data.DbHelper()
 	defer db.Close()
+	if user.Password != "" {
+		user.Password = getPassword(user.Password)
+	}
 	result := db.Debug().Model(&models.User{}).Update(user)
 	if result.Error != nil {
 		err = result.Error

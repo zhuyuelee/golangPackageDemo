@@ -29,10 +29,10 @@ func main() {
 		}))
 	} else {
 		fmt.Println("corsconfig error", err)
-
 	}
 
 	Router.POST("/login", controllers.Login)
+	Router.POST("/register", controllers.Login)
 	Router.GET("/welcome", controllers.Welcome)
 
 	//user

@@ -1,7 +1,8 @@
 package utils
 
 import (
-	config "GoSql/EchoDemo/dtos/Config"
+	"GoSql/EchoDemo/dtos/config"
+	"GoSql/EchoDemo/utils/tools"
 	"io"
 	"io/ioutil"
 	"os"
@@ -22,6 +23,9 @@ func init() {
 			},
 			DataBase: config.DataBase{
 				Sqlite: "data/data.db",
+			},
+			Salt: config.Salt{
+				Salt: tools.RandStr(8, tools.All),
 			},
 		}
 		data, err = yaml.Marshal(&conf)
@@ -55,6 +59,19 @@ func GetDatabaseConfig() (database string, err error) {
 		err = yaml.Unmarshal([]byte(configData), conf)
 		if err == nil {
 			database = conf.Sqlite
+		}
+	}
+	return
+}
+
+//GetSalt 获取密码盐
+func GetSalt() (salt string, err error) {
+
+	if configData != "" {
+		conf := &config.Salt{}
+		err = yaml.Unmarshal([]byte(configData), conf)
+		if err == nil {
+			salt = conf.Salt
 		}
 	}
 	return

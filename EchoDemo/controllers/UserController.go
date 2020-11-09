@@ -2,13 +2,22 @@ package controllers
 
 import (
 	"GoSql/EchoDemo/dtos"
+	"GoSql/EchoDemo/mapper"
 	"GoSql/EchoDemo/servers"
 	"GoSql/EchoDemo/utils"
+	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo"
 )
+
+var validate *validator.Validate
+
+func init() {
+	validate = validator.New()
+}
 
 //Login 登录
 func Login(c echo.Context) error {
@@ -17,11 +26,49 @@ func Login(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "参数错误"))
 	}
+
+	if err = validate.Struct(input); err != nil {
+
+		// if _, ok := err.(*validator.InvalidValidationError); ok {
+		// 	fmt.Println(err)
+		// 	return err
+		// }
+		return c.JSON(http.StatusOK, dtos.ErrorResult(1, err.Error()))
+	}
+
 	result, err := servers.Login(input)
 	if err != nil {
-		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "获取数据失败"))
+		return c.JSON(http.StatusOK, dtos.ErrorResult(1, err.Error()))
 	}
 	return c.JSON(http.StatusOK, dtos.SuccessDataResult(result))
+}
+
+//Register 注册
+func Register(c echo.Context) error {
+	input := new(dtos.LoginInput)
+	err := c.Bind(input)
+	if err != nil {
+		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "参数错误"))
+	}
+
+	if err = validate.Struct(input); err != nil {
+
+		if _, ok := err.(*validator.InvalidValidationError); ok {
+			fmt.Println(err)
+			return c.JSON(http.StatusOK, dtos.ErrorResult(1, "注册数据验证失败"))
+		}
+
+		return c.JSON(http.StatusOK, dtos.ErrorResult(1, fmt.Sprintf("注册数据验证失败 %v", err)))
+	}
+
+	userDto := &dtos.UserDto{}
+	mapper.Map(input, userDto)
+
+	err = servers.AddUser(userDto)
+	if err != nil {
+		return c.JSON(http.StatusOK, dtos.ErrorResult(1, "会员注册失败"))
+	}
+	return c.JSON(http.StatusOK, dtos.SuccessDataResult(userDto))
 }
 
 // GetUserList 获取用户列表

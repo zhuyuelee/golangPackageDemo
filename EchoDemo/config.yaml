@@ -1,3 +1,4 @@
 cors_domains:
 - http://127.0.0.1:9090
 sqlite_db: data/data.db
+salt: FGUFjvth
