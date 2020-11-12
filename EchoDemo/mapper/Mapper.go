@@ -1,4 +1,4 @@
-package mapper
+package main
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 
 var zeroValue reflect.Value
 
-const tag string = "mapper"
+const tagName string = "mapper"
 
 func init() {
 	zeroValue = reflect.Value{}
@@ -39,11 +39,16 @@ func Map(source, target interface{}) (err error) {
 	if sources.Kind() == reflect.Ptr {
 		sources = sources.Elem()
 	}
+
 	switch targetValue.Elem().Kind() {
 	case reflect.Slice:
 		return toSlice(sources, targetValue)
 	case reflect.Struct:
-		return toStruct(sources, targetValue)
+		sourceMap, err := toMap(sources)
+		if err == nil {
+			return toStruct(sourceMap, targetValue, "")
+		}
+		return err
 	}
 	err = errors.New("data type only supported struct or Slice")
 
@@ -59,32 +64,36 @@ func toSlice(source, target reflect.Value) error {
 	targetSlice := reflect.MakeSlice(targetType, len, len)
 	for i := 0; i < len; i++ {
 		value := reflect.New(targetType.Elem())
-		toStruct(source.Index(i), value)
-		targetSlice.Index(i).Set(value.Elem())
+		structMap, err := toMap(source.Index(i))
+		if err == nil {
+			toStruct(structMap, value, "")
+			target.Set(targetSlice)
+		}
 	}
-	target.Set(targetSlice)
 	return nil
 }
 
 //toStruct map to Struct
-func toStruct(source, target reflect.Value) (err error) {
-	sourceMap, err := toMap(source)
-	if err != nil {
-		return
-	}
+func toStruct(source map[string]reflect.Value, target reflect.Value, parentTag string) (err error) {
 	//remove pointer
 	target = target.Elem()
 	for i := 0; i < target.NumField(); i++ {
 		vField := target.Field(i)
 		tField := target.Type().Field(i)
-		var (
-			name string
-			ok   bool
-		)
-		if name, ok = tField.Tag.Lookup("mapper"); !ok {
-			name = tField.Name
+		tag, ok := tField.Tag.Lookup(tagName)
+		if tField.Anonymous {
+			nValue := reflect.New(tField.Type)
+			toStruct(source, nValue, tag)
+			vField.Set(nValue.Elem())
+			return
 		}
-		if value, ok := sourceMap[name]; ok {
+		if !ok {
+			tag = tField.Name
+		}
+		if parentTag != "" {
+			tag = fmt.Sprintf("%s.%s", parentTag, tag)
+		}
+		if value, ok := source[tag]; ok {
 			sType := value.Type()
 			vType := tField.Type
 
@@ -96,9 +105,13 @@ func toStruct(source, target reflect.Value) (err error) {
 			}
 			//type of Struct
 			if sType.Kind() == reflect.Struct && sType != vType {
+
 				nValue := reflect.New(vType)
-				toStruct(value, nValue)
-				vField.Set(nValue.Elem())
+				childMap, err := toMap(value)
+				if err == nil {
+					toStruct(childMap, nValue, "")
+					vField.Set(nValue.Elem())
+				}
 				//type of Slice
 			} else if sType.Kind() == reflect.Slice && sType != vType {
 				nValue := reflect.New(vType)
@@ -122,11 +135,25 @@ func toMap(source reflect.Value) (map[string]reflect.Value, error) {
 	}
 	for i := 0; i < source.NumField(); i++ {
 		field := t.Field(i)
-		tag, ok := field.Tag.Lookup(tag)
+		tag, ok := field.Tag.Lookup(tagName)
 		if !ok {
 			tag = field.Name
 		}
-		m[tag] = source.Field(i)
+		//Anonymous Field
+		if field.Anonymous {
+			childMap, err := toMap(source.Field(i))
+			if err != nil && len(childMap) > 0 {
+				for key, val := range childMap {
+					if ok {
+						m[fmt.Sprintf("%s.%s", tag, key)] = val
+					} else {
+						m[key] = val
+					}
+				}
+			}
+		} else {
+			m[tag] = source.Field(i)
+		}
 	}
 	return m, nil
 }
