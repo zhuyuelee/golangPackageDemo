@@ -1,4 +1,4 @@
-package main
+package mapper
 
 import (
 	"errors"
@@ -34,12 +34,10 @@ func Map(source, target interface{}) (err error) {
 	if targetValue.IsNil() {
 		return errors.New("target must not nil")
 	}
-
 	var sources = reflect.ValueOf(source)
 	if sources.Kind() == reflect.Ptr {
 		sources = sources.Elem()
 	}
-
 	switch targetValue.Elem().Kind() {
 	case reflect.Slice:
 		return toSlice(sources, targetValue)
@@ -67,9 +65,10 @@ func toSlice(source, target reflect.Value) error {
 		structMap, err := toMap(source.Index(i))
 		if err == nil {
 			toStruct(structMap, value, "")
-			target.Set(targetSlice)
+			targetSlice.Index(i).Set(value.Elem())
 		}
 	}
+	target.Set(targetSlice)
 	return nil
 }
 
@@ -81,8 +80,13 @@ func toStruct(source map[string]reflect.Value, target reflect.Value, parentTag s
 		vField := target.Field(i)
 		tField := target.Type().Field(i)
 		tag, ok := tField.Tag.Lookup(tagName)
+
+		if ok && tag == "-" {
+			continue
+		}
 		if tField.Anonymous {
 			nValue := reflect.New(tField.Type)
+			fmt.Printf("source %+v tag=%s \n", source, tag)
 			toStruct(source, nValue, tag)
 			vField.Set(nValue.Elem())
 			return
@@ -136,21 +140,22 @@ func toMap(source reflect.Value) (map[string]reflect.Value, error) {
 	for i := 0; i < source.NumField(); i++ {
 		field := t.Field(i)
 		tag, ok := field.Tag.Lookup(tagName)
-		if !ok {
+		if !ok || tag == "-" {
 			tag = field.Name
 		}
 		//Anonymous Field
 		if field.Anonymous {
 			childMap, err := toMap(source.Field(i))
-			if err != nil && len(childMap) > 0 {
+			if err == nil && len(childMap) > 0 {
 				for key, val := range childMap {
 					if ok {
-						m[fmt.Sprintf("%s.%s", tag, key)] = val
-					} else {
-						m[key] = val
+						key = fmt.Sprintf("%s.%s", tag, key)
 					}
+					m[key] = val
+					fmt.Println("key=", key)
 				}
 			}
+			fmt.Printf("anonymous=%+v tag=%s ok=%v \n", childMap, tag, ok)
 		} else {
 			m[tag] = source.Field(i)
 		}
