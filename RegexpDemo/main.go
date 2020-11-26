@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jinzhu/gorm"
+	"github.com/zhuyuelee/mapper"
 )
 
 //User User
@@ -76,5 +77,12 @@ func getFieldName(name string) string {
 			upper = false
 		}
 	}
+
+	source := make([]User, 0)
+
+	to := make([]User, 0)
+
+	mapper.Map(source, &to)
+
 	return string(chars)
 }

@@ -3,10 +3,11 @@ package servers
 import (
 	"GoSql/EchoDemo/dao"
 	"GoSql/EchoDemo/dtos"
-	"GoSql/EchoDemo/mapper"
 	"GoSql/EchoDemo/models"
 	"GoSql/EchoDemo/utils"
 	"fmt"
+
+	"github.com/zhuyuelee/mapper"
 )
 
 //Login 登录

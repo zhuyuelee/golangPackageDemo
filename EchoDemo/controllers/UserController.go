@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"GoSql/EchoDemo/dtos"
-	"GoSql/EchoDemo/mapper"
 	"GoSql/EchoDemo/servers"
 	"GoSql/EchoDemo/utils"
 	"fmt"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo"
+	"github.com/zhuyuelee/mapper"
 )
 
 var validate *validator.Validate
