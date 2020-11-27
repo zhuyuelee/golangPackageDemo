@@ -6,8 +6,8 @@ import (
 	"fmt"
 )
 
-//HeadLenth header length
-const HeadLenth uint32 = 0xC
+//HeadLength header length
+const HeadLength uint32 = 0xC
 
 //Message Message
 type Message struct {
@@ -37,12 +37,12 @@ func GetMessageSlice(data []byte) []Message {
 	msgs := make([]Message, 0)
 
 	for {
-		head, err := NewHeader(data[i : i+HeadLenth])
+		head, err := NewHeader(data[i : i+HeadLength])
 		if err != nil {
 			fmt.Println("read head error,err=", err)
 			break
 		}
-		body := string(data[i+HeadLenth : i+head.Lenth])
+		body := string(data[i+HeadLength : i+head.Lenth])
 		msgs = append(msgs, NewMessage(body, head.ID, head.CID))
 		i += head.Lenth
 		if i >= l {
@@ -81,7 +81,7 @@ func (m *Message) GetMessage() []byte {
 //getHeader getHeader  cid 1 链接 2 发送消息 3关闭链接
 func getHeader(length int, id uint32, cid CommandID) (head []byte) {
 	head = make([]byte, 0)
-	head = append(head, utils.IntToBytes(uint32(length)+HeadLenth)...)
+	head = append(head, utils.IntToBytes(uint32(length)+HeadLength)...)
 	head = append(head, utils.IntToBytes(id)...)
 	head = append(head, utils.IntToBytes(uint32(cid))...)
 	return
@@ -99,7 +99,7 @@ type Header struct {
 func NewHeader(head []byte) (header Header, err error) {
 	header = Header{}
 	lenth := uint32(len(head))
-	if lenth != HeadLenth {
+	if lenth != HeadLength {
 		return header, errors.New("header length error")
 	}
 	header.Lenth = utils.BytesToInt(head[:4])

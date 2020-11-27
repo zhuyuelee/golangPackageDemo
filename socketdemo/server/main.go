@@ -60,7 +60,7 @@ func connect(conn net.Conn) {
 		return
 	}
 	fmt.Println("connect data", data)
-	head, err := socketdemo.NewHeader(data[:socketdemo.HeadLenth])
+	head, err := socketdemo.NewHeader(data[:socketdemo.HeadLength])
 	if err != nil {
 		fmt.Println("read head error,err=", err)
 		conn.Close()
@@ -115,7 +115,7 @@ func read(conn net.Conn, id uint32) {
 		if header.CID != socketdemo.CONTENT {
 			break
 		} else {
-			conLen := int(header.Lenth - socketdemo.HeadLenth)
+			conLen := int(header.Lenth - socketdemo.HeadLength)
 			data, err := reader.Peek(conLen)
 			if err != nil {
 				fmt.Println("data error=", err)
