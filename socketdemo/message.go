@@ -62,6 +62,15 @@ func NewMessage(msg string, id uint32, cid CommandID) Message {
 	}
 }
 
+//SetMessage SetMessage
+func SetMessage(data []byte, header Header) Message {
+	return Message{
+		Msg: string(data),
+		ID:  header.ID,
+		CID: header.CID,
+	}
+}
+
 //GetMessage GetMessage
 func (m *Message) GetMessage() []byte {
 	b := []byte(m.Msg)

@@ -3,6 +3,7 @@ package main
 import (
 	"GoSql/socketdemo"
 	"GoSql/socketdemo/utils"
+	"bufio"
 	"fmt"
 	"net"
 )
@@ -20,40 +21,67 @@ func main() {
 		fmt.Println("client connect error")
 	} else {
 		exit := make(chan bool)
-		go func() {
-			for {
-				data := make([]byte, 1024)
-
-				n, err := conn.Read(data)
-				if err != nil {
-					fmt.Println("conn.Read err", err)
-				}
-				if n == 0 {
-					exit <- true
-				}
-			}
-		}()
+		go read(conn, exit)
 
 		go func() {
 			for {
 				var input string = fmt.Sprintf("i=%d %s-->", i, utils.RandStr(12, utils.Upper))
 				cid := socketdemo.CONTENT
-				if i == 10000 {
-					cid = socketdemo.CLOSE
-				}
+				// if i == 10000 {
+				// 	cid = socketdemo.CLOSE
+				// }
 				msg := socketdemo.NewMessage(input, uint32(1), cid)
-				fmt.Println("您说：", msg.Msg)
+				//	fmt.Println("您说：", msg.Msg)
 				//发送消息
 				conn.Write(msg.GetMessage())
-				if cid == socketdemo.CLOSE {
-					break
-				}
+				// if cid == socketdemo.CLOSE {
+				// 	break
+				// }
 				i++
 			}
 		}()
 		<-exit
 	}
 	fmt.Println("退出了.....")
+}
+
+func read(conn net.Conn, exit chan<- bool) {
+	defer conn.Close()
+	defer func() {
+		exit <- true
+		err := recover()
+		if err != nil {
+			fmt.Println("read error,err=", err)
+		}
+	}()
+	reader := bufio.NewReader(conn)
+	for {
+		head, err := reader.Peek(12)
+		if err != nil {
+			fmt.Println("reader head error=", err)
+			break
+		}
+		reader.Discard(len(head))
+
+		header, err := socketdemo.NewHeader(head)
+		if err != nil {
+			fmt.Println("header error=", err)
+			break
+		}
+		if header.CID == socketdemo.CLOSE {
+			exit <- true
+			break
+		} else if header.CID == socketdemo.CONTENT {
+			conLen := int(header.Lenth - socketdemo.HeadLenth)
+			data, err := reader.Peek(conLen)
+			if err != nil {
+				fmt.Println("data error=", err)
+				break
+			}
+			fmt.Printf("recive id=%d msg=%s\n", header.ID, string(data))
+			reader.Discard(conLen)
+		}
+	}
 }
 
 func connect(conn net.Conn) (result bool) {
